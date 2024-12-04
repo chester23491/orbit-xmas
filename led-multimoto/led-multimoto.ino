@@ -15,14 +15,15 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // Adafruit_MotorShield AFMS = Adafruit_MotorShield(0x61);
 
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
-Adafruit_DCMotor *howToXmasQuestion = AFMS.getMotor(1); // M1
+Adafruit_DCMotor *howToXmasQuestion = AFMS.getMotor(1);       // M1
 Adafruit_DCMotor *howToXmasWithoutConsume = AFMS.getMotor(2); // M2
-Adafruit_DCMotor *sundaySales = AFMS.getMotor(3); // M3
-Adafruit_DCMotor *sold = AFMS.getMotor(4); // M4
+Adafruit_DCMotor *sundaySales = AFMS.getMotor(3);             // M3
+Adafruit_DCMotor *sold = AFMS.getMotor(4);                    // M4
 
-Adafruit_DCMotor* leds[4] = {howToXmasQuestion, howToXmasWithoutConsume, sundaySales, sold};
+Adafruit_DCMotor *leds[4] = {howToXmasQuestion, howToXmasWithoutConsume, sundaySales, sold};
 
-enum HowToXmasTransitionState {
+enum HowToXmasTransitionState
+{
   OFF_TO_TOP,
   TOP_TO_BOOTH,
   BOOTH_TO_BUTTOM,
@@ -36,18 +37,25 @@ bool isEnabled = true;
 
 String command;
 
-void setup() {
-  Serial.begin(9600);           // set up Serial library at 9600 bps
-  Serial.println("Adafruit Motorshield v2 - DC Motor test!");
+void setup()
+{
+  Serial.begin(9600); // set up Serial library at 9600 bps
+  Serial.println("ORBIT XMAS LED control is starting!");
 
-  if (!AFMS.begin(75)) {         // create with the default frequency 1.6KHz
-  // if (!AFMS.begin(1000)) {  // OR with a different frequency, say 1KHz
+  if (!AFMS.begin(75)) // frequency set to 75Hz
+  {
     Serial.println("Could not find Motor Shield. Check wiring.");
-    while (1);
+    // Stop execution
+    while (1)
+    {
+      // Do nothing, effectively stopping the setup
+    }
   }
   Serial.println("Motor Shield found.");
 
-  for (Adafruit_DCMotor* led : leds) {
+  // Set all motors to run in the forward direction
+  for (Adafruit_DCMotor *led : leds)
+  {
     // Set the speed to start, from 0 (off) to 255 (max speed)
     led->setSpeed(255);
     led->run(FORWARD);
@@ -57,53 +65,69 @@ void setup() {
   Serial.println("Type Command (slow, fast, off)");
 }
 
-void howToXmasLoop() {
+void howToXmasLoop()
+{
   unsigned long currentTimeInMs = millis();
 
   if (currentTransitionState == OFF_TO_TOP &&
-      currentTimeInMs - transitionStartTime >= transitionDuration) {
+      currentTimeInMs - transitionStartTime >= transitionDuration)
+  {
     currentTransitionState = TOP_TO_BOOTH;
     transitionStartTime = currentTimeInMs;
-  } else if (currentTransitionState == TOP_TO_BOOTH &&
-             currentTimeInMs - transitionStartTime >= transitionDuration) {
+  }
+  else if (currentTransitionState == TOP_TO_BOOTH &&
+           currentTimeInMs - transitionStartTime >= transitionDuration)
+  {
     currentTransitionState = BOOTH_TO_BUTTOM;
     transitionStartTime = currentTimeInMs;
-  } else if (currentTransitionState == BOOTH_TO_BUTTOM &&
-             currentTimeInMs - transitionStartTime >= transitionDuration) {
+  }
+  else if (currentTransitionState == BOOTH_TO_BUTTOM &&
+           currentTimeInMs - transitionStartTime >= transitionDuration)
+  {
     currentTransitionState = BUTTOM_TO_OFF;
     transitionStartTime = currentTimeInMs;
-  } else if (currentTransitionState == BUTTOM_TO_OFF &&
-             currentTimeInMs - transitionStartTime >= transitionDuration) {
+  }
+  else if (currentTransitionState == BUTTOM_TO_OFF &&
+           currentTimeInMs - transitionStartTime >= transitionDuration)
+  {
     currentTransitionState = OFF_TO_TOP;
     transitionStartTime = currentTimeInMs;
   }
 
-  switch (currentTransitionState) {
-    case OFF_TO_TOP:
-    howToXmasQuestionState = 255; howToXmasWithoutConsumeState = 0;
+  switch (currentTransitionState)
+  {
+  case OFF_TO_TOP:
+    howToXmasQuestionState = 255;
+    howToXmasWithoutConsumeState = 0;
     break;
-    case TOP_TO_BOOTH:
-    howToXmasQuestionState = 255; howToXmasWithoutConsumeState = 255;
+  case TOP_TO_BOOTH:
+    howToXmasQuestionState = 255;
+    howToXmasWithoutConsumeState = 255;
     break;
-    case BOOTH_TO_BUTTOM:
-    howToXmasQuestionState = 0; howToXmasWithoutConsumeState = 255;
+  case BOOTH_TO_BUTTOM:
+    howToXmasQuestionState = 0;
+    howToXmasWithoutConsumeState = 255;
     break;
-    case BUTTOM_TO_OFF:
-    howToXmasQuestionState = 0; howToXmasWithoutConsumeState = 0;
+  case BUTTOM_TO_OFF:
+    howToXmasQuestionState = 0;
+    howToXmasWithoutConsumeState = 0;
     break;
   }
-  if(isEnabled){  
+  if (isEnabled)
+  {
     howToXmasQuestion->run(FORWARD);
     howToXmasQuestion->setSpeed(howToXmasQuestionState);
     howToXmasWithoutConsume->run(FORWARD);
     howToXmasWithoutConsume->setSpeed(howToXmasWithoutConsumeState);
 
-    //temp
+    // temp
     sundaySales->run(FORWARD);
     sundaySales->setSpeed(howToXmasWithoutConsumeState);
     sold->run(FORWARD);
     sold->setSpeed(howToXmasWithoutConsumeState);
-  }else {
+  }
+  else
+  {
     howToXmasQuestion->setSpeed(0);
     howToXmasWithoutConsume->setSpeed(0);
     sundaySales->setSpeed(0);
@@ -111,25 +135,30 @@ void howToXmasLoop() {
   }
 }
 
-void loop() {
+void loop()
+{
   howToXmasLoop();
 
-  if (Serial.available()) {
-      command = Serial.readStringUntil('\n');
-      command.trim();
-      if (command.equals("slow")) {
-        isEnabled = true;
-        transitionDuration = 10000;
-      }
-      else if (command.equals("fast")) {
-         isEnabled = true;
-        transitionDuration = 3333;
-      }
-      else if (command.equals("off")) {
-        isEnabled = false;
-      }
-      Serial.print("Command: ");
-      Serial.println(command);
+  if (Serial.available())
+  {
+    command = Serial.readStringUntil('\n');
+    command.trim();
+    if (command.equals("slow"))
+    {
+      isEnabled = true;
+      transitionDuration = 10000;
+    }
+    else if (command.equals("fast"))
+    {
+      isEnabled = true;
+      transitionDuration = 3333;
+    }
+    else if (command.equals("off"))
+    {
+      isEnabled = false;
+    }
+    Serial.print("Command: ");
+    Serial.println(command);
   }
-  //delay(1000);
+  // delay(1000);
 }
