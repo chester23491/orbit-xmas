@@ -11,8 +11,6 @@ For use with the Adafruit Motor Shield v2
 
 // Create the motor shield object with the default I2C address
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
-// Or, create it with a different I2C address (say for stacking)
-// Adafruit_MotorShield AFMS = Adafruit_MotorShield(0x61);
 
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
 Adafruit_DCMotor *howToXmasQuestion = AFMS.getMotor(1);       // M1
@@ -29,10 +27,21 @@ enum HowToXmasTransitionState
   BOOTH_TO_BUTTOM,
   BUTTOM_TO_OFF,
 };
-HowToXmasTransitionState currentTransitionState = OFF_TO_TOP;
+HowToXmasTransitionState currentHowToXmasTransitionState = OFF_TO_TOP;
 int howToXmasQuestionState, howToXmasWithoutConsumeState;
-unsigned long transitionStartTime = 0;
-unsigned long transitionDuration = 3333;
+unsigned long howToXmasTransitionStartTime = 0;
+unsigned long howToXmasTransitionDuration = 3333;
+
+enum SoldBlinkTransitionState
+{
+  SOLD_BLINK_SLOW_ON,
+  SOLD_BLINK_SLOW_OFF,
+};
+SoldBlinkTransitionState currentSoldBlinkTransitionState = SOLD_BLINK_SLOW;
+unsigned long soldBlinkTransitionStartTime = 0;
+unsigned long soldBlinkTransitionDuration = 2500;
+bool isSundaySalesEnabled = true;
+
 bool isEnabled = true;
 
 String command;
@@ -65,36 +74,80 @@ void setup()
   Serial.println("Type Command (slow, fast, off)");
 }
 
+void soldBlinkLoop()
+{
+  unsigned long currentTimeInMs = millis();
+
+  if (currentSundaySalesSoldTransitionState == SOLD_BLINK_SLOW_OFF &&
+      currentTimeInMs - soldBlinkTransitionStartTime >= soldBlinkTransitionDuration)
+  {
+    currentSundaySalesSoldTransitionState = SOLD_BLINK_SLOW_ON;
+    soldBlinkTransitionStartTime = currentTimeInMs;
+  }
+  else if (currentSundaySalesSoldTransitionState == SOLD_BLINK_SLOW_ON &&
+           currentTimeInMs - soldBlinkTransitionStartTime >= soldBlinkTransitionDuration)
+  {
+    currentSundaySalesSoldTransitionState = SOLD_BLINK_SLOW_OFF;
+    soldBlinkTransitionStartTime = currentTimeInMs;
+  }
+
+  if (isEnabled && currentSundaySalesSoldTransitionState == SOLD_BLINK_SLOW_OFF)
+  {
+    sold->run(FORWARD);
+    sold->setSpeed(255);
+  }
+  else if (isEnabled && currentSundaySalesSoldTransitionState == SOLD_BLINK_SLOW_OFF)
+  {
+    sold->run(FORWARD);
+    sold->setSpeed(0);
+  }
+  else
+  {
+    sold->setSpeed(0);
+  }
+
+  // Sunday sales is steady on
+  if (isEnabled && isSundaySalesEnabled)
+  {
+    sundaySales->run(FORWARD);
+    sundaySales->setSpeed(255);
+  }
+  else
+  {
+    sundaySales->setSpeed(0);
+  }
+}
+
 void howToXmasLoop()
 {
   unsigned long currentTimeInMs = millis();
 
-  if (currentTransitionState == OFF_TO_TOP &&
-      currentTimeInMs - transitionStartTime >= transitionDuration)
+  if (currentHowToXmasTransitionState == OFF_TO_TOP &&
+      currentTimeInMs - howToXmasTransitionStartTime >= howToXmasTransitionDuration)
   {
-    currentTransitionState = TOP_TO_BOOTH;
-    transitionStartTime = currentTimeInMs;
+    currentHowToXmasTransitionState = TOP_TO_BOOTH;
+    howToXmasTransitionStartTime = currentTimeInMs;
   }
-  else if (currentTransitionState == TOP_TO_BOOTH &&
-           currentTimeInMs - transitionStartTime >= transitionDuration)
+  else if (currentHowToXmasTransitionState == TOP_TO_BOOTH &&
+           currentTimeInMs - howToXmasTransitionStartTime >= howToXmasTransitionDuration)
   {
-    currentTransitionState = BOOTH_TO_BUTTOM;
-    transitionStartTime = currentTimeInMs;
+    currentHowToXmasTransitionState = BOOTH_TO_BUTTOM;
+    howToXmasTransitionStartTime = currentTimeInMs;
   }
-  else if (currentTransitionState == BOOTH_TO_BUTTOM &&
-           currentTimeInMs - transitionStartTime >= transitionDuration)
+  else if (currentHowToXmasTransitionState == BOOTH_TO_BUTTOM &&
+           currentTimeInMs - howToXmasTransitionStartTime >= howToXmasTransitionDuration)
   {
-    currentTransitionState = BUTTOM_TO_OFF;
-    transitionStartTime = currentTimeInMs;
+    currentHowToXmasTransitionState = BUTTOM_TO_OFF;
+    howToXmasTransitionStartTime = currentTimeInMs;
   }
-  else if (currentTransitionState == BUTTOM_TO_OFF &&
-           currentTimeInMs - transitionStartTime >= transitionDuration)
+  else if (currentHowToXmasTransitionState == BUTTOM_TO_OFF &&
+           currentTimeInMs - howToXmasTransitionStartTime >= howToXmasTransitionDuration)
   {
-    currentTransitionState = OFF_TO_TOP;
-    transitionStartTime = currentTimeInMs;
+    currentHowToXmasTransitionState = OFF_TO_TOP;
+    howToXmasTransitionStartTime = currentTimeInMs;
   }
 
-  switch (currentTransitionState)
+  switch (currentHowToXmasTransitionState)
   {
   case OFF_TO_TOP:
     howToXmasQuestionState = 255;
@@ -119,12 +172,6 @@ void howToXmasLoop()
     howToXmasQuestion->setSpeed(howToXmasQuestionState);
     howToXmasWithoutConsume->run(FORWARD);
     howToXmasWithoutConsume->setSpeed(howToXmasWithoutConsumeState);
-
-    // temp
-    sundaySales->run(FORWARD);
-    sundaySales->setSpeed(howToXmasWithoutConsumeState);
-    sold->run(FORWARD);
-    sold->setSpeed(howToXmasWithoutConsumeState);
   }
   else
   {
@@ -138,7 +185,7 @@ void howToXmasLoop()
 void loop()
 {
   howToXmasLoop();
-
+  soldBlinkLoop();
   if (Serial.available())
   {
     command = Serial.readStringUntil('\n');
@@ -146,12 +193,16 @@ void loop()
     if (command.equals("slow"))
     {
       isEnabled = true;
-      transitionDuration = 10000;
+      howToXmasTransitionDuration = 10000;
+      isSundaySalesEnabled = false;
+      soldBlinkTransitionDuration = 2500;
     }
     else if (command.equals("fast"))
     {
       isEnabled = true;
-      transitionDuration = 3333;
+      howToXmasTransitionDuration = 3333;
+      isSundaySalesEnabled = true;
+      soldBlinkTransitionDuration = 333;
     }
     else if (command.equals("off"))
     {
@@ -160,5 +211,4 @@ void loop()
     Serial.print("Command: ");
     Serial.println(command);
   }
-  // delay(1000);
 }
