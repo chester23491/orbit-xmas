@@ -37,7 +37,7 @@ enum SoldBlinkTransitionState
   SOLD_BLINK_SLOW_ON,
   SOLD_BLINK_SLOW_OFF,
 };
-SoldBlinkTransitionState currentSoldBlinkTransitionState = SOLD_BLINK_SLOW;
+SoldBlinkTransitionState currentSoldBlinkTransitionState = SOLD_BLINK_SLOW_ON;
 unsigned long soldBlinkTransitionStartTime = 0;
 unsigned long soldBlinkTransitionDuration = 2500;
 bool isSundaySalesEnabled = true;
@@ -55,10 +55,7 @@ void setup()
   {
     Serial.println("Could not find Motor Shield. Check wiring.");
     // Stop execution
-    while (1)
-    {
-      // Do nothing, effectively stopping the setup
-    }
+    while (1);
   }
   Serial.println("Motor Shield found.");
 
@@ -78,25 +75,25 @@ void soldBlinkLoop()
 {
   unsigned long currentTimeInMs = millis();
 
-  if (currentSundaySalesSoldTransitionState == SOLD_BLINK_SLOW_OFF &&
+  if (currentSoldBlinkTransitionState == SOLD_BLINK_SLOW_OFF &&
       currentTimeInMs - soldBlinkTransitionStartTime >= soldBlinkTransitionDuration)
   {
-    currentSundaySalesSoldTransitionState = SOLD_BLINK_SLOW_ON;
+    currentSoldBlinkTransitionState = SOLD_BLINK_SLOW_ON;
     soldBlinkTransitionStartTime = currentTimeInMs;
   }
-  else if (currentSundaySalesSoldTransitionState == SOLD_BLINK_SLOW_ON &&
+  else if (currentSoldBlinkTransitionState == SOLD_BLINK_SLOW_ON &&
            currentTimeInMs - soldBlinkTransitionStartTime >= soldBlinkTransitionDuration)
   {
-    currentSundaySalesSoldTransitionState = SOLD_BLINK_SLOW_OFF;
+    currentSoldBlinkTransitionState = SOLD_BLINK_SLOW_OFF;
     soldBlinkTransitionStartTime = currentTimeInMs;
   }
 
-  if (isEnabled && currentSundaySalesSoldTransitionState == SOLD_BLINK_SLOW_OFF)
+  if (isEnabled && currentSoldBlinkTransitionState == SOLD_BLINK_SLOW_OFF)
   {
     sold->run(FORWARD);
     sold->setSpeed(255);
   }
-  else if (isEnabled && currentSundaySalesSoldTransitionState == SOLD_BLINK_SLOW_OFF)
+  else if (isEnabled && currentSoldBlinkTransitionState == SOLD_BLINK_SLOW_OFF)
   {
     sold->run(FORWARD);
     sold->setSpeed(0);
