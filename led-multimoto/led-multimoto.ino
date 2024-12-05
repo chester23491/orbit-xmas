@@ -13,10 +13,10 @@ For use with the Adafruit Motor Shield v2
 Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
-Adafruit_DCMotor *howToXmasQuestion = AFMS.getMotor(1);       // M1
-Adafruit_DCMotor *howToXmasWithoutConsume = AFMS.getMotor(2); // M2
-Adafruit_DCMotor *sundaySales = AFMS.getMotor(3);             // M3
-Adafruit_DCMotor *sold = AFMS.getMotor(4);                    // M4
+Adafruit_DCMotor *howToXmasQuestion = AFMS.getMotor(2);       // M1
+Adafruit_DCMotor *howToXmasWithoutConsume = AFMS.getMotor(1); // M2
+Adafruit_DCMotor *sundaySales = AFMS.getMotor(4);             // M3
+Adafruit_DCMotor *sold = AFMS.getMotor(3);                    // M4
 
 Adafruit_DCMotor *leds[4] = {howToXmasQuestion, howToXmasWithoutConsume, sundaySales, sold};
 
@@ -39,7 +39,7 @@ enum SoldBlinkTransitionState
 };
 SoldBlinkTransitionState currentSoldBlinkTransitionState = SOLD_BLINK_SLOW_ON;
 unsigned long soldBlinkTransitionStartTime = 0;
-unsigned long soldBlinkTransitionDuration = 2500;
+unsigned long soldBlinkTransitionDuration = 333;
 bool isSundaySalesEnabled = true;
 
 bool isEnabled = true;
@@ -190,14 +190,14 @@ void loop()
     if (command.equals("slow"))
     {
       isEnabled = true;
-      howToXmasTransitionDuration = 10000;
+      //howToXmasTransitionDuration = 10000;
       isSundaySalesEnabled = false;
       soldBlinkTransitionDuration = 2500;
     }
     else if (command.equals("fast"))
     {
       isEnabled = true;
-      howToXmasTransitionDuration = 3333;
+      //howToXmasTransitionDuration = 3333;
       isSundaySalesEnabled = true;
       soldBlinkTransitionDuration = 333;
     }
