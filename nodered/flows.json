@@ -124,12 +124,12 @@
     {
         "id": "af203ec8286e4df3",
         "type": "ui-group",
-        "name": "Group 1",
+        "name": "Ansteuerung",
         "page": "81d49f4826a23bf7",
-        "width": "12",
+        "width": "6",
         "height": "1",
         "order": 1,
-        "showTitle": false,
+        "showTitle": true,
         "className": "",
         "visible": "true",
         "disabled": "false",
@@ -153,6 +153,20 @@
             "groupBorderRadius": "4px",
             "widgetGap": "12px"
         }
+    },
+    {
+        "id": "cc5c5ce1a4393658",
+        "type": "ui-group",
+        "name": "System",
+        "page": "81d49f4826a23bf7",
+        "width": "6",
+        "height": "1",
+        "order": 2,
+        "showTitle": true,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
     },
     {
         "id": "487fc2c7a89a703a",
@@ -383,7 +397,7 @@
         "z": "4730ea0f94864beb",
         "group": "af203ec8286e4df3",
         "name": "off",
-        "label": "Ausschalten",
+        "label": "Stopp",
         "order": 5,
         "width": 0,
         "height": 0,
@@ -766,6 +780,124 @@
         "wires": [
             [
                 "e1f933fa97fb5e35"
+            ]
+        ]
+    },
+    {
+        "id": "93b88e2919f606ac",
+        "type": "ui-button",
+        "z": "4730ea0f94864beb",
+        "group": "cc5c5ce1a4393658",
+        "name": "systemOff",
+        "label": "Ausschalten",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "red",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 1670,
+        "y": 140,
+        "wires": [
+            [
+                "84fe6a9ecf0783ca"
+            ]
+        ]
+    },
+    {
+        "id": "84fe6a9ecf0783ca",
+        "type": "exec",
+        "z": "4730ea0f94864beb",
+        "command": "sudo shutdown -h 0",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "shutdown",
+        "x": 1920,
+        "y": 140,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "5cd692ce640477fd",
+        "type": "exec",
+        "z": "4730ea0f94864beb",
+        "command": "sudo shutdown -r 0",
+        "addpay": "",
+        "append": "",
+        "useSpawn": "false",
+        "timer": "",
+        "winHide": false,
+        "oldrc": false,
+        "name": "reboot",
+        "x": 1910,
+        "y": 220,
+        "wires": [
+            [],
+            [],
+            []
+        ]
+    },
+    {
+        "id": "85311d71c1a5498c",
+        "type": "ui-button",
+        "z": "4730ea0f94864beb",
+        "group": "cc5c5ce1a4393658",
+        "name": "reboot",
+        "label": "Neustarten",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "red",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 1650,
+        "y": 220,
+        "wires": [
+            [
+                "5cd692ce640477fd"
             ]
         ]
     }
