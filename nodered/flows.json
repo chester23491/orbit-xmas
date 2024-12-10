@@ -1,0 +1,772 @@
+[
+    {
+        "id": "4730ea0f94864beb",
+        "type": "tab",
+        "label": "Flow 1",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "64cc823c45ae5ca1",
+        "type": "serial-port",
+        "name": "uart",
+        "serialport": "/dev/ttyAMA0",
+        "serialbaud": "115200",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "Y",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "bin",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "1000"
+    },
+    {
+        "id": "9f028f4efc744a70",
+        "type": "serial-port",
+        "name": "steampunk0",
+        "serialport": "/dev/mega0",
+        "serialbaud": "9600",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "e721ed4cb249dfe0",
+        "type": "ui-base",
+        "name": "My Dashboard",
+        "path": "/dashboard",
+        "appIcon": "",
+        "includeClientData": true,
+        "acceptsClientConfig": [
+            "ui-notification",
+            "ui-control"
+        ],
+        "showPathInSidebar": false,
+        "showPageTitle": true,
+        "navigationStyle": "default",
+        "titleBarStyle": "default",
+        "showReconnectNotification": true,
+        "notificationDisplayTime": 1,
+        "showDisconnectNotification": true
+    },
+    {
+        "id": "b2daabc434ab8d7c",
+        "type": "ui-theme",
+        "name": "Default Theme",
+        "colors": {
+            "surface": "#ffffff",
+            "primary": "#0094CE",
+            "bgPage": "#eeeeee",
+            "groupBg": "#ffffff",
+            "groupOutline": "#cccccc"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "81d49f4826a23bf7",
+        "type": "ui-page",
+        "name": "Orbit Spielzeugwarenfabrik I",
+        "ui": "e721ed4cb249dfe0",
+        "path": "/page1",
+        "icon": "home",
+        "layout": "grid",
+        "theme": "238f65578cdc59fa",
+        "breakpoints": [
+            {
+                "name": "Default",
+                "px": "0",
+                "cols": "3"
+            },
+            {
+                "name": "Tablet",
+                "px": "576",
+                "cols": "6"
+            },
+            {
+                "name": "Small Desktop",
+                "px": "768",
+                "cols": "9"
+            },
+            {
+                "name": "Desktop",
+                "px": "1024",
+                "cols": "12"
+            }
+        ],
+        "order": 1,
+        "className": "",
+        "visible": "true",
+        "disabled": "false"
+    },
+    {
+        "id": "af203ec8286e4df3",
+        "type": "ui-group",
+        "name": "Group 1",
+        "page": "81d49f4826a23bf7",
+        "width": "12",
+        "height": "1",
+        "order": 1,
+        "showTitle": false,
+        "className": "",
+        "visible": "true",
+        "disabled": "false",
+        "groupType": "default"
+    },
+    {
+        "id": "238f65578cdc59fa",
+        "type": "ui-theme",
+        "name": "Dark",
+        "colors": {
+            "surface": "#3f3f3f",
+            "primary": "#0094ce",
+            "bgPage": "#7f7f7f",
+            "groupBg": "#3f3f3f",
+            "groupOutline": "#cccccc"
+        },
+        "sizes": {
+            "density": "default",
+            "pagePadding": "12px",
+            "groupGap": "12px",
+            "groupBorderRadius": "4px",
+            "widgetGap": "12px"
+        }
+    },
+    {
+        "id": "487fc2c7a89a703a",
+        "type": "serial in",
+        "z": "4730ea0f94864beb",
+        "name": "tfmini-plus-uart",
+        "serial": "64cc823c45ae5ca1",
+        "x": 180,
+        "y": 240,
+        "wires": [
+            [
+                "edf81ac5a10ab708"
+            ]
+        ]
+    },
+    {
+        "id": "e1f933fa97fb5e35",
+        "type": "debug",
+        "z": "4730ea0f94864beb",
+        "name": "debug 1",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1620,
+        "y": 620,
+        "wires": []
+    },
+    {
+        "id": "edf81ac5a10ab708",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "parse tfmini data",
+        "func": "// Assume `msg.payload` contains the raw buffer from the serial port.\nlet data = Buffer.isBuffer(msg.payload)\n  ? msg.payload\n  : Buffer.from(msg.payload);\n\n// Check if we have enough data (at least 9 bytes) and the header is correct\nif (data.length >= 8 && data[0] === 0x59 && data[1] === 0x59) {\n  // Parse the distance, strength, and temperature values\n  let distance = data[2] + (data[3] << 8); // Combine low and high bytes for distance\n  let strength = data[4] + (data[5] << 8); // Combine low and high bytes for strength\n  let temperatureRaw = data[6] + (data[7] << 8); // Combine low and high bytes for temperature\n  let temperature = temperatureRaw / 8 - 256; // Convert raw temperature value\n\n  // Construct the output object\n  let result = {\n    distance: distance,\n    strength: strength,\n    temperature: temperature,\n  };\n\n  if (strength > 100 && distance < 1200) {\n    flow.set(\"tfmini\", result);\n  }\n\n  // Pass the result to the next node\n  msg.payload = result;\n  return msg;\n} else {\n  // If data is not valid, pass an error message\n  msg.payload = { error: \"Invalid data or header mismatch\" };\n  return msg;\n}\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 490,
+        "y": 240,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "659d65411e4bbab9",
+        "type": "trigger",
+        "z": "4730ea0f94864beb",
+        "name": "",
+        "op1": "",
+        "op2": "0",
+        "op1type": "date",
+        "op2type": "str",
+        "duration": "-250",
+        "extend": false,
+        "overrideDelay": false,
+        "units": "ms",
+        "reset": "",
+        "bytopic": "all",
+        "topic": "topic",
+        "outputs": 1,
+        "x": 380,
+        "y": 380,
+        "wires": [
+            [
+                "7ea29477bf6d2537"
+            ]
+        ]
+    },
+    {
+        "id": "7ea29477bf6d2537",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "stateMachine",
+        "func": "const closeDistance = 50;\n\nconst offState = \"off\";\nconst readyAutoState = \"readyAuto\";\nconst slowState = \"slow\";\nconst fastState = \"fast\";\n\nlet stateMachineMode = flow.get(\"stateMachineMode\");\nif (stateMachineMode === undefined) {\n  stateMachineMode = \"auto\";\n}\nlet currentState = flow.get(\"currentState\") || readyAutoState;\nlet currentStateTimestamp = flow.get(\"currentStateTimestamp\") || 0;\n\nlet timestamp = msg.payload;\nlet tfmini = flow.get(\"tfmini\") || { distance: 0 }; // Ensure tfmini is an object with a distance property\n\nfunction updateState(newState, timestamp) {\n  currentState = newState;\n  flow.set(\"currentStateTimestamp\", timestamp);\n  flow.set(\"currentState\", currentState);\n}\n\nfunction getCommand(state) {\n  switch (state) {\n    case offState:\n      return \"off\";\n    case readyAutoState:\n      return \"off\";\n    case slowState:\n      return \"slow\";\n    case fastState:\n      return \"fast\";\n  }\n}\n\nfunction handleStateTransition(currentState, timeInCurrentState, distance, timestamp) {\n  switch (currentState) {\n    case readyAutoState:\n      if (timeInCurrentState >= 15000 && distance < closeDistance) {\n        return slowState;\n      } else if (timeInCurrentState >= 90000 && distance > closeDistance) {\n        return slowState;\n      }\n      break;\n\n    case slowState:\n      if (timeInCurrentState >= 15000 && distance < closeDistance) {\n        return fastState;\n      } else if (timeInCurrentState >= 60000 && distance > closeDistance) {\n        return readyAutoState;\n      } else if (timeInCurrentState >= 30000 && distance > closeDistance) {\n        return readyAutoState;\n      }\n      break;\n\n    case fastState:\n      if (timeInCurrentState >= 60000 && distance > closeDistance) {\n        return readyAutoState;\n      }\n      break;\n\n    case offState:\n      return slowState;\n  }\n  return currentState;\n}\n\nfunction updatePayload(currentState, timeInCurrentState, distance) {\n  return {\n    timestampDiff: timeInCurrentState,\n    command: getCommand(currentState),\n    distance: distance,\n    mode: currentState,\n  };\n}\n\nif (stateMachineMode === \"auto\" && tfmini.distance !== 0) { // Check tfmini.distance instead of tfmini\n  const timeInCurrentState = timestamp - currentStateTimestamp;\n  const newState = handleStateTransition(currentState, timeInCurrentState, tfmini.distance, timestamp);\n\n  if (newState !== currentState) {\n    updateState(newState, timestamp);\n  }\n\n  msg.payload = updatePayload(newState, timeInCurrentState, tfmini.distance);\n  return msg;\n}\n\nmsg.payload = {\n  timestampDiff: 0,\n  command: getCommand(stateMachineMode),\n  distance: tfmini.distance,\n  mode: stateMachineMode,\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 600,
+        "y": 380,
+        "wires": [
+            [
+                "a8df569220ebd2f4",
+                "c115d22812750234"
+            ]
+        ]
+    },
+    {
+        "id": "67fe8187a0d66d2e",
+        "type": "inject",
+        "z": "4730ea0f94864beb",
+        "name": "",
+        "props": [
+            {
+                "p": "payload"
+            },
+            {
+                "p": "topic",
+                "vt": "str"
+            }
+        ],
+        "repeat": "",
+        "crontab": "",
+        "once": true,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 170,
+        "y": 380,
+        "wires": [
+            [
+                "659d65411e4bbab9"
+            ]
+        ]
+    },
+    {
+        "id": "57b03c694e92139e",
+        "type": "http in",
+        "z": "4730ea0f94864beb",
+        "name": "mode",
+        "url": "/mode",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 230,
+        "y": 640,
+        "wires": [
+            [
+                "1b164da1838b133e"
+            ]
+        ]
+    },
+    {
+        "id": "5a09f37c61e41008",
+        "type": "http response",
+        "z": "4730ea0f94864beb",
+        "name": "",
+        "statusCode": "200",
+        "headers": {},
+        "x": 660,
+        "y": 640,
+        "wires": []
+    },
+    {
+        "id": "93206ddf153d2886",
+        "type": "serial out",
+        "z": "4730ea0f94864beb",
+        "name": "steampunk0",
+        "serial": "9f028f4efc744a70",
+        "x": 1110,
+        "y": 220,
+        "wires": []
+    },
+    {
+        "id": "be8c5ea623ce5c82",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "commandToSerial",
+        "func": "msg.payload = msg.payload + \"\\n\";\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1050,
+        "y": 360,
+        "wires": [
+            [
+                "93206ddf153d2886"
+            ]
+        ]
+    },
+    {
+        "id": "84bf16cbfafba04c",
+        "type": "rbe",
+        "z": "4730ea0f94864beb",
+        "name": "",
+        "func": "rbe",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "septopics": true,
+        "property": "payload",
+        "x": 890,
+        "y": 220,
+        "wires": [
+            [
+                "be8c5ea623ce5c82",
+                "b44feaf0a1c53312",
+                "e1278eddd3ca9ba2"
+            ]
+        ]
+    },
+    {
+        "id": "1b164da1838b133e",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "function 2",
+        "func": "msg.payload = msg.req.query; //serial.status.waiting\nflow.set(\"stateMachineMode\",msg.req.query.mode);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 720,
+        "wires": [
+            [
+                "5a09f37c61e41008"
+            ]
+        ]
+    },
+    {
+        "id": "91c3e4658786e5d1",
+        "type": "ui-button",
+        "z": "4730ea0f94864beb",
+        "group": "af203ec8286e4df3",
+        "name": "off",
+        "label": "Ausschalten",
+        "order": 5,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "off",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "red",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 250,
+        "y": 60,
+        "wires": [
+            [
+                "3207b0bde5c288c9"
+            ]
+        ]
+    },
+    {
+        "id": "3207b0bde5c288c9",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "setManualState",
+        "func": "flow.set(\"stateMachineMode\", msg.payload);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 580,
+        "y": 80,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "7d2c0637fde76169",
+        "type": "ui-button",
+        "z": "4730ea0f94864beb",
+        "group": "af203ec8286e4df3",
+        "name": "slow",
+        "label": "Langsam",
+        "order": 4,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "slow",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 250,
+        "y": 100,
+        "wires": [
+            [
+                "3207b0bde5c288c9"
+            ]
+        ]
+    },
+    {
+        "id": "4cdf9eafeca12e33",
+        "type": "ui-button",
+        "z": "4730ea0f94864beb",
+        "group": "af203ec8286e4df3",
+        "name": "fast",
+        "label": "Schnell",
+        "order": 3,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "fast",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 250,
+        "y": 140,
+        "wires": [
+            [
+                "3207b0bde5c288c9"
+            ]
+        ]
+    },
+    {
+        "id": "7e0d8f3e5cd96244",
+        "type": "ui-button",
+        "z": "4730ea0f94864beb",
+        "group": "af203ec8286e4df3",
+        "name": "auto",
+        "label": "Automatisch",
+        "order": 2,
+        "width": 0,
+        "height": 0,
+        "emulateClick": false,
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "",
+        "className": "",
+        "icon": "",
+        "iconPosition": "left",
+        "payload": "auto",
+        "payloadType": "str",
+        "topic": "topic",
+        "topicType": "msg",
+        "buttonColor": "green",
+        "textColor": "",
+        "iconColor": "",
+        "enableClick": true,
+        "enablePointerdown": false,
+        "pointerdownPayload": "",
+        "pointerdownPayloadType": "str",
+        "enablePointerup": false,
+        "pointerupPayload": "",
+        "pointerupPayloadType": "str",
+        "x": 250,
+        "y": 180,
+        "wires": [
+            [
+                "3207b0bde5c288c9"
+            ]
+        ]
+    },
+    {
+        "id": "a8df569220ebd2f4",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "stateToCommand",
+        "func": "msg.payload = msg.payload.command;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 790,
+        "y": 500,
+        "wires": [
+            [
+                "84bf16cbfafba04c"
+            ]
+        ]
+    },
+    {
+        "id": "b44feaf0a1c53312",
+        "type": "ui-text",
+        "z": "4730ea0f94864beb",
+        "group": "af203ec8286e4df3",
+        "order": 6,
+        "width": 0,
+        "height": 0,
+        "name": "showCommand",
+        "label": "Kommando",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#717171",
+        "wrapText": false,
+        "className": "",
+        "x": 800,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "c115d22812750234",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "modeToPayload",
+        "func": "msg.payload = msg.payload.mode;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 840,
+        "y": 560,
+        "wires": [
+            [
+                "9ae92913c430a843"
+            ]
+        ]
+    },
+    {
+        "id": "9ae92913c430a843",
+        "type": "rbe",
+        "z": "4730ea0f94864beb",
+        "name": "",
+        "func": "rbe",
+        "gap": "",
+        "start": "",
+        "inout": "out",
+        "septopics": true,
+        "property": "payload",
+        "x": 1110,
+        "y": 540,
+        "wires": [
+            [
+                "7e274ba8a1211771"
+            ]
+        ]
+    },
+    {
+        "id": "7e274ba8a1211771",
+        "type": "ui-text",
+        "z": "4730ea0f94864beb",
+        "group": "af203ec8286e4df3",
+        "order": 1,
+        "width": 0,
+        "height": 0,
+        "name": "showMode",
+        "label": "Modus",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#717171",
+        "wrapText": false,
+        "className": "",
+        "x": 730,
+        "y": 200,
+        "wires": []
+    },
+    {
+        "id": "4f41d00d57225ec8",
+        "type": "ui-template",
+        "z": "4730ea0f94864beb",
+        "group": "",
+        "page": "",
+        "ui": "e721ed4cb249dfe0",
+        "name": "",
+        "order": 0,
+        "width": 0,
+        "height": 0,
+        "head": "",
+        "format": "html {\n    cursor: none;\n}",
+        "storeOutMessages": true,
+        "passthru": true,
+        "resendOnRefresh": true,
+        "templateScope": "site:style",
+        "className": "",
+        "x": 120,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "e1278eddd3ca9ba2",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "commandToWeb",
+        "func": "if (msg.payload === 'off'){\n    msg.payload = msg.payload\n    return msg;\n}\nmsg.payload = \"on\"\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1290,
+        "y": 400,
+        "wires": [
+            [
+                "dba8168575bc5a5f"
+            ]
+        ]
+    },
+    {
+        "id": "dba8168575bc5a5f",
+        "type": "http request",
+        "z": "4730ea0f94864beb",
+        "name": "ShellyRequest",
+        "method": "GET",
+        "ret": "txt",
+        "paytoqs": "ignore",
+        "url": "http://127.0.0.1:1880/relay/0?turn={{{payload}}}",
+        "tls": "",
+        "persist": false,
+        "proxy": "",
+        "insecureHTTPParser": false,
+        "authType": "",
+        "senderr": false,
+        "headers": [],
+        "x": 1540,
+        "y": 520,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "800665bdc29ad398",
+        "type": "http in",
+        "z": "4730ea0f94864beb",
+        "name": "relay",
+        "url": "/relay/0",
+        "method": "get",
+        "upload": false,
+        "swaggerDoc": "",
+        "x": 1290,
+        "y": 700,
+        "wires": [
+            [
+                "9a64a412a458d191",
+                "0d56fdc16d91d735"
+            ]
+        ]
+    },
+    {
+        "id": "9a64a412a458d191",
+        "type": "http response",
+        "z": "4730ea0f94864beb",
+        "name": "",
+        "statusCode": "200",
+        "headers": {},
+        "x": 1600,
+        "y": 700,
+        "wires": []
+    },
+    {
+        "id": "0d56fdc16d91d735",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "function 3",
+        "func": "msg.payload = msg.req.query; //serial.status.waiting\n//flow.set(\"stateMachineMode\",msg.req.query.mode);\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1440,
+        "y": 640,
+        "wires": [
+            [
+                "e1f933fa97fb5e35"
+            ]
+        ]
+    }
+]

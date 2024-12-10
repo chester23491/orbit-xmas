@@ -1,17 +1,19 @@
 const closeDistance = 50;
 
 const offState = "off";
-const pauseState = "pause";
-const normalState = "normal";
-const salesState = "sales";
+const readyAutoState = "readyAuto";
+const slowState = "slow";
+const fastState = "fast";
 
-let stateMachineEnabled = flow.get("stateMachineEnabled") || false;
-let currentState =
-  flow.get("currentState") || (stateMachineEnabled ? pauseState : offState);
+let stateMachineMode = flow.get("stateMachineMode");
+if (stateMachineMode === undefined) {
+  stateMachineMode = "auto";
+}
+let currentState = flow.get("currentState") || readyAutoState;
 let currentStateTimestamp = flow.get("currentStateTimestamp") || 0;
 
 let timestamp = msg.payload;
-let tfmini = flow.get("tfmini") || 0;
+let tfmini = flow.get("tfmini") || { distance: 0 }; // Ensure tfmini is an object with a distance property
 
 function updateState(newState, timestamp) {
   currentState = newState;
@@ -19,55 +21,76 @@ function updateState(newState, timestamp) {
   flow.set("currentState", currentState);
 }
 
-if (stateMachineEnabled && tfmini !== 0) {
-  const timeInCurrentState = timestamp - currentStateTimestamp;
+function getCommand(state) {
+  switch (state) {
+    case offState:
+      return "off";
+    case readyAutoState:
+      return "off";
+    case slowState:
+      return "slow";
+    case fastState:
+      return "fast";
+  }
+}
 
+function handleStateTransition(currentState, timeInCurrentState, distance, timestamp) {
   switch (currentState) {
-    case pauseState:
-      if (timeInCurrentState >= 15000 && tfmini.distance < closeDistance) {
-        updateState(normalState, timestamp);
-      } else if (
-        timeInCurrentState >= 90000 &&
-        tfmini.distance > closeDistance
-      ) {
-        updateState(normalState, timestamp);
+    case readyAutoState:
+      if (timeInCurrentState >= 15000 && distance < closeDistance) {
+        return slowState;
+      } else if (timeInCurrentState >= 90000 && distance > closeDistance) {
+        return slowState;
       }
       break;
 
-    case normalState:
-      if (timeInCurrentState >= 15000 && tfmini.distance < closeDistance) {
-        updateState(salesState, timestamp);
-      } else if (
-        timeInCurrentState >= 60000 &&
-        tfmini.distance > closeDistance
-      ) {
-        updateState(pauseState, timestamp);
-      } else if (
-        timeInCurrentState >= 30000 &&
-        tfmini.distance > closeDistance
-      ) {
-        updateState(pauseState, timestamp);
+    case slowState:
+      if (timeInCurrentState >= 15000 && distance < closeDistance) {
+        return fastState;
+      } else if (timeInCurrentState >= 60000 && distance > closeDistance) {
+        return readyAutoState;
+      } else if (timeInCurrentState >= 30000 && distance > closeDistance) {
+        return readyAutoState;
       }
       break;
 
-    case salesState:
-      if (timeInCurrentState >= 60000 && tfmini.distance > closeDistance) {
-        updateState(pauseState, timestamp);
+    case fastState:
+      if (timeInCurrentState >= 60000 && distance > closeDistance) {
+        return readyAutoState;
       }
       break;
+
+    case offState:
+      return slowState;
+  }
+  return currentState;
+}
+
+function updatePayload(currentState, timeInCurrentState, distance) {
+  return {
+    timestampDiff: timeInCurrentState,
+    command: getCommand(currentState),
+    distance: distance,
+    mode: currentState,
+  };
+}
+
+if (stateMachineMode === "auto" && tfmini.distance !== 0) { // Check tfmini.distance instead of tfmini
+  const timeInCurrentState = timestamp - currentStateTimestamp;
+  const newState = handleStateTransition(currentState, timeInCurrentState, tfmini.distance, timestamp);
+
+  if (newState !== currentState) {
+    updateState(newState, timestamp);
   }
 
-  msg.payload = {
-    timestampDiff: timeInCurrentState,
-    currentState: currentState,
-    distance: tfmini.distance,
-  };
+  msg.payload = updatePayload(newState, timeInCurrentState, tfmini.distance);
   return msg;
 }
 
 msg.payload = {
   timestampDiff: 0,
-  currentState: offState,
+  command: getCommand(stateMachineMode),
   distance: tfmini.distance,
+  mode: stateMachineMode,
 };
 return msg;
