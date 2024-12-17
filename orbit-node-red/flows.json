@@ -169,9 +169,50 @@
         "groupType": "default"
     },
     {
+        "id": "eeb71f074119a0c3",
+        "type": "serial-port",
+        "name": "lift0",
+        "serialport": "/dev/lift0",
+        "serialbaud": "9600",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
+        "id": "5eed91f6a712a8b1",
+        "type": "serial-port",
+        "name": "light0",
+        "serialport": "/dev/light0",
+        "serialbaud": "9600",
+        "databits": "8",
+        "parity": "none",
+        "stopbits": "1",
+        "waitfor": "",
+        "dtr": "none",
+        "rts": "none",
+        "cts": "none",
+        "dsr": "none",
+        "newline": "\\n",
+        "bin": "false",
+        "out": "char",
+        "addchar": "",
+        "responsetimeout": "10000"
+    },
+    {
         "id": "487fc2c7a89a703a",
         "type": "serial in",
         "z": "4730ea0f94864beb",
+        "d": true,
         "name": "tfmini-plus-uart",
         "serial": "64cc823c45ae5ca1",
         "x": 180,
@@ -183,26 +224,10 @@
         ]
     },
     {
-        "id": "e1f933fa97fb5e35",
-        "type": "debug",
-        "z": "4730ea0f94864beb",
-        "name": "debug 1",
-        "active": true,
-        "tosidebar": true,
-        "console": false,
-        "tostatus": false,
-        "complete": "payload",
-        "targetType": "msg",
-        "statusVal": "",
-        "statusType": "auto",
-        "x": 1620,
-        "y": 620,
-        "wires": []
-    },
-    {
         "id": "edf81ac5a10ab708",
         "type": "function",
         "z": "4730ea0f94864beb",
+        "d": true,
         "name": "parse tfmini data",
         "func": "// Assume `msg.payload` contains the raw buffer from the serial port.\nlet data = Buffer.isBuffer(msg.payload)\n  ? msg.payload\n  : Buffer.from(msg.payload);\n\n// Check if we have enough data (at least 9 bytes) and the header is correct\nif (data.length >= 8 && data[0] === 0x59 && data[1] === 0x59) {\n  // Parse the distance, strength, and temperature values\n  let distance = data[2] + (data[3] << 8); // Combine low and high bytes for distance\n  let strength = data[4] + (data[5] << 8); // Combine low and high bytes for strength\n  let temperatureRaw = data[6] + (data[7] << 8); // Combine low and high bytes for temperature\n  let temperature = temperatureRaw / 8 - 256; // Convert raw temperature value\n\n  // Construct the output object\n  let result = {\n    distance: distance,\n    strength: strength,\n    temperature: temperature,\n  };\n\n  if (strength > 100 && distance < 1200) {\n    flow.set(\"tfmini\", result);\n  }\n\n  // Pass the result to the next node\n  msg.payload = result;\n  return msg;\n} else {\n  // If data is not valid, pass an error message\n  msg.payload = { error: \"Invalid data or header mismatch\" };\n  return msg;\n}\n",
         "outputs": 1,
@@ -247,7 +272,7 @@
         "type": "function",
         "z": "4730ea0f94864beb",
         "name": "stateMachine",
-        "func": "const closeDistance = 50;\n\nconst offState = \"off\";\nconst readyAutoState = \"readyAuto\";\nconst slowState = \"slow\";\nconst fastState = \"fast\";\n\nlet stateMachineMode = flow.get(\"stateMachineMode\");\nif (stateMachineMode === undefined) {\n  stateMachineMode = \"auto\";\n}\nlet currentState = flow.get(\"currentState\") || readyAutoState;\nlet currentStateTimestamp = flow.get(\"currentStateTimestamp\") || 0;\n\nlet timestamp = msg.payload;\nlet tfmini = flow.get(\"tfmini\") || { distance: 0 }; // Ensure tfmini is an object with a distance property\n\nfunction updateState(newState, timestamp) {\n  currentState = newState;\n  flow.set(\"currentStateTimestamp\", timestamp);\n  flow.set(\"currentState\", currentState);\n}\n\nfunction getCommand(state) {\n  switch (state) {\n    case offState:\n      return \"off\";\n    case readyAutoState:\n      return \"off\";\n    case slowState:\n      return \"slow\";\n    case fastState:\n      return \"fast\";\n  }\n}\n\nfunction handleStateTransition(currentState, timeInCurrentState, distance, timestamp) {\n  switch (currentState) {\n    case readyAutoState:\n      if (timeInCurrentState >= 15000 && distance < closeDistance) {\n        return slowState;\n      } else if (timeInCurrentState >= 90000 && distance > closeDistance) {\n        return slowState;\n      }\n      break;\n\n    case slowState:\n      if (timeInCurrentState >= 15000 && distance < closeDistance) {\n        return fastState;\n      } else if (timeInCurrentState >= 60000 && distance > closeDistance) {\n        return readyAutoState;\n      } else if (timeInCurrentState >= 30000 && distance > closeDistance) {\n        return readyAutoState;\n      }\n      break;\n\n    case fastState:\n      if (timeInCurrentState >= 60000 && distance > closeDistance) {\n        return readyAutoState;\n      }\n      break;\n\n    case offState:\n      return slowState;\n  }\n  return currentState;\n}\n\nfunction updatePayload(currentState, timeInCurrentState, distance) {\n  return {\n    timestampDiff: timeInCurrentState,\n    command: getCommand(currentState),\n    distance: distance,\n    mode: currentState,\n  };\n}\n\nif (stateMachineMode === \"auto\" && tfmini.distance !== 0) { // Check tfmini.distance instead of tfmini\n  const timeInCurrentState = timestamp - currentStateTimestamp;\n  const newState = handleStateTransition(currentState, timeInCurrentState, tfmini.distance, timestamp);\n\n  if (newState !== currentState) {\n    updateState(newState, timestamp);\n  }\n\n  msg.payload = updatePayload(newState, timeInCurrentState, tfmini.distance);\n  return msg;\n}\n\nmsg.payload = {\n  timestampDiff: 0,\n  command: getCommand(stateMachineMode),\n  distance: tfmini.distance,\n  mode: stateMachineMode,\n};\nreturn msg;\n",
+        "func": "const closeDistance = 1;\n\nconst offState = \"off\";\nconst readyAutoState = \"readyAuto\";\nconst slowState = \"slow\";\nconst fastState = \"fast\";\n\nlet stateMachineMode = flow.get(\"stateMachineMode\");\nif (stateMachineMode === undefined) {\n  stateMachineMode = \"auto\";\n}\nlet currentState = flow.get(\"currentState\") || readyAutoState;\nlet currentStateTimestamp = flow.get(\"currentStateTimestamp\") || 0;\n\nlet timestamp = msg.payload;\nlet tfmini = flow.get(\"tfmini\") || { distance: 0 }; // Ensure tfmini is an object with a distance property\n\nfunction updateState(newState, timestamp) {\n  currentState = newState;\n  flow.set(\"currentStateTimestamp\", timestamp);\n  flow.set(\"currentState\", currentState);\n}\n\nfunction getCommand(state) {\n  switch (state) {\n    case offState:\n      return \"off\";\n    case readyAutoState:\n      return \"off\";\n    case slowState:\n      return \"slow\";\n    case fastState:\n      return \"fast\";\n  }\n}\n\nfunction handleStateTransition(currentState, timeInCurrentState, distance, timestamp) {\n  switch (currentState) {\n    case readyAutoState:\n      if (distance == closeDistance) {\n        return slowState;\n      }\n      break;\n\n    case slowState:\n      if (timeInCurrentState >= 15000 && distance == closeDistance) {\n        return fastState;\n      } else if (timeInCurrentState >= 15000 && distance == 0) {\n        return readyAutoState;\n      }\n      break;\n\n    case fastState:\n      if (timeInCurrentState >= 15000 && distance == closeDistance) {\n        return slowState;\n      } else if (timeInCurrentState >= 15000 && distance == 0) {\n        return readyAutoState;\n      }\n      break;\n\n    case offState:\n      return slowState;\n  }\n  return currentState;\n}\n\nfunction updatePayload(currentState, timeInCurrentState, distance) {\n  return {\n    timestampDiff: timeInCurrentState,\n    command: getCommand(currentState),\n    distance: distance,\n    mode: currentState,\n  };\n}\n\nif (stateMachineMode === \"auto\") { // Check tfmini.distance instead of tfmini\n  const timeInCurrentState = timestamp - currentStateTimestamp;\n  const newState = handleStateTransition(currentState, timeInCurrentState, tfmini.distance, timestamp);\n\n  if (newState !== currentState) {\n    updateState(newState, timestamp);\n  }\n\n  msg.payload = updatePayload(newState, timeInCurrentState, tfmini.distance);\n  return msg;\n}\n\nmsg.payload = {\n  timestampDiff: 0,\n  command: getCommand(stateMachineMode),\n  distance: tfmini.distance,\n  mode: stateMachineMode,\n};\nreturn msg;\n",
         "outputs": 1,
         "timeout": 0,
         "noerr": 0,
@@ -259,7 +284,8 @@
         "wires": [
             [
                 "a8df569220ebd2f4",
-                "c115d22812750234"
+                "c115d22812750234",
+                "7dc0a289910748d9"
             ]
         ]
     },
@@ -326,8 +352,8 @@
         "z": "4730ea0f94864beb",
         "name": "steampunk0",
         "serial": "9f028f4efc744a70",
-        "x": 1110,
-        "y": 220,
+        "x": 1290,
+        "y": 180,
         "wires": []
     },
     {
@@ -342,11 +368,13 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1050,
-        "y": 360,
+        "x": 1090,
+        "y": 280,
         "wires": [
             [
-                "93206ddf153d2886"
+                "93206ddf153d2886",
+                "77484f3c493bac64",
+                "cab2d19233af9ba7"
             ]
         ]
     },
@@ -577,8 +605,8 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 790,
-        "y": 500,
+        "x": 830,
+        "y": 480,
         "wires": [
             [
                 "84bf16cbfafba04c"
@@ -704,7 +732,7 @@
         "initialize": "",
         "finalize": "",
         "libs": [],
-        "x": 1290,
+        "x": 1250,
         "y": 400,
         "wires": [
             [
@@ -720,7 +748,7 @@
         "method": "GET",
         "ret": "txt",
         "paytoqs": "ignore",
-        "url": "http://127.0.0.1:1880/relay/0?turn={{{payload}}}",
+        "url": "http://192.168.252.2/relay/0?turn={{{payload}}}",
         "tls": "",
         "persist": false,
         "proxy": "",
@@ -778,9 +806,7 @@
         "x": 1440,
         "y": 640,
         "wires": [
-            [
-                "e1f933fa97fb5e35"
-            ]
+            []
         ]
     },
     {
@@ -899,6 +925,104 @@
             [
                 "5cd692ce640477fd"
             ]
+        ]
+    },
+    {
+        "id": "77484f3c493bac64",
+        "type": "serial out",
+        "z": "4730ea0f94864beb",
+        "name": "lift0",
+        "serial": "eeb71f074119a0c3",
+        "x": 1350,
+        "y": 240,
+        "wires": []
+    },
+    {
+        "id": "7dc0a289910748d9",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "toDistance",
+        "func": "msg.payload = msg.payload.distance;\nreturn msg;",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 1030,
+        "y": 100,
+        "wires": [
+            [
+                "b57b39199b4937be"
+            ]
+        ]
+    },
+    {
+        "id": "b57b39199b4937be",
+        "type": "ui-text",
+        "z": "4730ea0f94864beb",
+        "group": "af203ec8286e4df3",
+        "order": 7,
+        "width": 0,
+        "height": 0,
+        "name": "showDistance",
+        "label": "Distanz",
+        "format": "{{msg.payload}}",
+        "layout": "row-spread",
+        "style": false,
+        "font": "",
+        "fontSize": 16,
+        "color": "#717171",
+        "wrapText": false,
+        "className": "",
+        "x": 1260,
+        "y": 60,
+        "wires": []
+    },
+    {
+        "id": "cab2d19233af9ba7",
+        "type": "serial out",
+        "z": "4730ea0f94864beb",
+        "name": "light0",
+        "serial": "5eed91f6a712a8b1",
+        "x": 1410,
+        "y": 320,
+        "wires": []
+    },
+    {
+        "id": "1c2b3dbc3808128a",
+        "type": "rpi-gpio in",
+        "z": "4730ea0f94864beb",
+        "name": "",
+        "pin": "14",
+        "intype": "tri",
+        "debounce": "25",
+        "read": false,
+        "bcm": true,
+        "x": 310,
+        "y": 460,
+        "wires": [
+            [
+                "185bee1918f2e24e"
+            ]
+        ]
+    },
+    {
+        "id": "185bee1918f2e24e",
+        "type": "function",
+        "z": "4730ea0f94864beb",
+        "name": "parse pri data",
+        "func": "let result = {\n    distance: msg.payload,\n    strength: 0,\n    temperature: 0,\n};\n\nflow.set(\"tfmini\", result);\nmsg.payload = result;\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": 0,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 420,
+        "y": 560,
+        "wires": [
+            []
         ]
     }
 ]

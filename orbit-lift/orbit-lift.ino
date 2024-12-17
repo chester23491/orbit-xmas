@@ -59,8 +59,12 @@ void setup() {
   pinMode(DIR_M4, OUTPUT);
 
   // L9958 PWM pins
+  //TCCR4B = TCCR4B & B11111000 | B00000101;    //  30.64 Hz
+  //TCCR1B = (TCCR1B & 0b11111000) | 0x04;
   pinMode(PWM_M1, OUTPUT);  digitalWrite(PWM_M1, LOW);
   pinMode(PWM_M2, OUTPUT);  digitalWrite(PWM_M2, LOW);    // Timer1
+
+  TCCR0B = (TCCR0B & 0b11111000) | 0x02;
   pinMode(PWM_M3, OUTPUT);  digitalWrite(PWM_M3, LOW);
   pinMode(PWM_M4, OUTPUT);  digitalWrite(PWM_M4, LOW);    // Timer0
 
@@ -94,6 +98,7 @@ void setup() {
   SPI.setBitOrder(LSBFIRST);
   SPI.setDataMode(SPI_MODE1);  // clock pol = low, phase = high
 
+
   // Motor 1
   digitalWrite(SS_M1, LOW);
   SPI.transfer(lowByte(configWord));
@@ -120,6 +125,15 @@ void setup() {
   pwm1 = 0; pwm2 = 0; pwm3 = 0; pwm4 = 0; // Set speed (0-255)
 
   digitalWrite(ENABLE_MOTORS, LOW);// LOW = enabled
+  
+  dir1 = 1;
+  pwm1 = 64; //set direction and speed 
+  digitalWrite(DIR_M1, dir1);
+  analogWrite(PWM_M1, pwm1); // write to pins
+
+  digitalWrite(DIR_M3, dir1);
+  analogWrite(PWM_M3, pwm1); // write to pins
+
 
   Serial.println("Type Command (slow, fast, off)");
 } // End setup
@@ -131,21 +145,21 @@ void loop() {
       command.trim();
       if (command.equals("slow")) {
         dir1 = 1;
-        pwm1 = 32; //set direction and speed 
-        digitalWrite(DIR_M1, dir1);
-        analogWrite(PWM_M1, pwm1); // write to pins
+        pwm1 = 64; //set direction and speed 
+        digitalWrite(PWM_M3, dir1);
+        analogWrite(PWM_M3, pwm1); // write to pins
       }
       else if (command.equals("fast")) {
         dir1 = 1;
-        pwm1 = 255; //set direction and speed 
-        digitalWrite(DIR_M1, dir1);
-        analogWrite(PWM_M1, pwm1); // write to pins
+        pwm1 = 110; //set direction and speed 
+        digitalWrite(PWM_M3, dir1);
+        analogWrite(PWM_M3, pwm1); // write to pins
       }
       else if (command.equals("off")) {
         dir1 = 1;
         pwm1 = 0; //set direction and speed 
-        digitalWrite(DIR_M1, dir1);
-        analogWrite(PWM_M1, pwm1); // write to pins
+        digitalWrite(PWM_M3, dir1);
+        analogWrite(PWM_M3, pwm1); // write to pins
       }
       Serial.print("Command: ");
       Serial.println(command);

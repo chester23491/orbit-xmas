@@ -14,8 +14,8 @@ Adafruit_MotorShield AFMS = Adafruit_MotorShield();
 // Select which 'port' M1, M2, M3 or M4. In this case, M1
 Adafruit_DCMotor *howToXmasQuestion = AFMS.getMotor(2);       // M2
 Adafruit_DCMotor *howToXmasWithoutConsume = AFMS.getMotor(1); // M1
-Adafruit_DCMotor *sundaySales = AFMS.getMotor(4);             // M4
-Adafruit_DCMotor *sold = AFMS.getMotor(3);                    // M3
+Adafruit_DCMotor *sundaySales = AFMS.getMotor(3);             // M3
+Adafruit_DCMotor *sold = AFMS.getMotor(4);                    // M4
 
 Adafruit_DCMotor *leds[4] = {howToXmasQuestion, howToXmasWithoutConsume, sundaySales, sold};
 
@@ -41,8 +41,8 @@ enum SoldBlinkTransitionState
 };
 SoldBlinkTransitionState currentSoldBlinkTransitionState = SOLD_BLINK_SLOW_ON;
 unsigned long soldBlinkTransitionStartTime = 0;
-unsigned long soldBlinkTransitionDuration = 333;
-unsigned long soldBlinkTransitionLongOffDuration = 1000;
+unsigned long soldBlinkTransitionDuration = 150;
+unsigned long soldBlinkTransitionLongOffDuration = 3000;
 bool isSundaySalesEnabled = true;
 
 bool isEnabled = true;
@@ -117,15 +117,16 @@ void soldBlinkLoop()
   if (isEnabled && (currentSoldBlinkTransitionState == SOLD_BLINK_SLOW_ON || currentSoldBlinkTransitionState == SOLD_BLINK_SLOW_ON_AGAIN))
   {
     sold->run(FORWARD);
-    sold->setSpeed(255);
+    sold->setSpeed(128);
   }
   else if (isEnabled && (currentSoldBlinkTransitionState == SOLD_BLINK_SLOW_OFF || currentSoldBlinkTransitionState == SOLD_BLINK_SLOW_OFF_SHORT))
   {
-    sold->run(FORWARD);
+    sold->run(RELEASE);
     sold->setSpeed(0);
   }
   else
   {
+    sold->run(RELEASE);
     sold->setSpeed(0);
   }
 
@@ -133,10 +134,11 @@ void soldBlinkLoop()
   if (isEnabled && isSundaySalesEnabled)
   {
     sundaySales->run(FORWARD);
-    sundaySales->setSpeed(255);
+    sundaySales->setSpeed(128);
   }
   else
   {
+    sundaySales->run(RELEASE);
     sundaySales->setSpeed(0);
   }
 }
@@ -225,7 +227,7 @@ void loop()
       isEnabled = true;
       // howToXmasTransitionDuration = 3333;
       isSundaySalesEnabled = true;
-      soldBlinkTransitionDuration = 333;
+      soldBlinkTransitionDuration = 100;
     }
     else if (command.equals("off"))
     {

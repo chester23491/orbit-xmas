@@ -1,4 +1,4 @@
-const closeDistance = 50;
+const closeDistance = 1;
 
 const offState = "off";
 const readyAutoState = "readyAuto";
@@ -37,25 +37,23 @@ function getCommand(state) {
 function handleStateTransition(currentState, timeInCurrentState, distance, timestamp) {
   switch (currentState) {
     case readyAutoState:
-      if (timeInCurrentState >= 15000 && distance < closeDistance) {
-        return slowState;
-      } else if (timeInCurrentState >= 90000 && distance > closeDistance) {
+      if (distance == closeDistance) {
         return slowState;
       }
       break;
 
     case slowState:
-      if (timeInCurrentState >= 15000 && distance < closeDistance) {
+      if (timeInCurrentState >= 15000 && distance == closeDistance) {
         return fastState;
-      } else if (timeInCurrentState >= 60000 && distance > closeDistance) {
-        return readyAutoState;
-      } else if (timeInCurrentState >= 30000 && distance > closeDistance) {
+      } else if (timeInCurrentState >= 30000 && distance == 0) {
         return readyAutoState;
       }
       break;
 
     case fastState:
-      if (timeInCurrentState >= 60000 && distance > closeDistance) {
+      if (timeInCurrentState >= 15000 && distance == closeDistance) {
+        return slowState;
+      } else if (timeInCurrentState >= 30000 && distance == 0) {
         return readyAutoState;
       }
       break;
@@ -75,7 +73,7 @@ function updatePayload(currentState, timeInCurrentState, distance) {
   };
 }
 
-if (stateMachineMode === "auto" && tfmini.distance !== 0) { // Check tfmini.distance instead of tfmini
+if (stateMachineMode === "auto") { // Check tfmini.distance instead of tfmini
   const timeInCurrentState = timestamp - currentStateTimestamp;
   const newState = handleStateTransition(currentState, timeInCurrentState, tfmini.distance, timestamp);
 
