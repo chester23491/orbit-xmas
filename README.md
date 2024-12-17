@@ -7,13 +7,19 @@ Das Projekt "Orbit Adventsfenster" ist ein interaktives Beleuchtungssystem, das 
 ![System overview](images/orbit-xmas.png)
 
 ## Komponenten
-Orbit Lift
-Der Orbit Lift ist für die Bewegung der Lichter zuständig. Er steuert die Positionierung der Lichter und sorgt dafür, dass sie sich synchron zur Musik bewegen.
+
+### Orbit Lift
+Der Orbit Lift ist für die Bewegung vom Lift zuständig. Er steuert den Lift zwischen den Modus aus, langsam und schnell
 
 ### Orbit Lights
-Die Orbit Lights steuern die Beleuchtungseffekte. Sie sind für die verschiedenen Lichtmuster und Farben verantwortlich, die während der Show angezeigt werden.
+
+Die Orbit Lights steuern die Beleuchtungseffekte. Sie sind für die verschiedenen Lichtmuster verantwortlich, die während dem Modus langsam und schnell angezeigt werden.
+
+### Orbit Steampunk
+Der Orbit Steampunk sind Motoren auf denen Zahnräder drauf sind. Sie bewegen sich zufällig und unterschiedlich schnell.
 
 ### Orbit Node-RED
+
 Der Orbit Node-RED ist das Steuerungssystem des Projekts. Es verwendet Node-RED, um die verschiedenen Komponenten zu steuern und zu synchronisieren. Die Konfigurationsdateien und Skripte befinden sich in diesem Verzeichnis.
 
 - commands.md: Dokumentation der verfügbaren Befehle.
@@ -21,16 +27,14 @@ Der Orbit Node-RED ist das Steuerungssystem des Projekts. Es verwendet Node-RED,
 - states.js: JavaScript-Datei zur Verwaltung der Zustände.
 - tfminiparser.js: Parser für die TFMini-Sensoren.
 
-### Orbit Steampunk
-Der Orbit Steampunk ist eine alternative Version des Projekts mit einem Steampunk-Thema. Er verwendet ähnliche Komponenten, jedoch mit einem anderen Design und anderen Effekten.
 
 ## Benutzeroberfläche
 
 ![HMI](images/hmi.png)
 
-Die Benutzeroberfläche ermöglicht es den Benutzern, die verschiedenen Lichteffekte und Bewegungen zu steuern. Sie bietet eine einfache Möglichkeit, das System zu konfigurieren und anzupassen.
+Die Benutzeroberfläche ermöglicht es den Benutzern, die verschiedenen Modus zu steuern. Sie bietet eine einfache Möglichkeit, das System zu konfigurieren und anzupassen.
 
-Installation und Einrichtung
+### Installation und Einrichtung
 Klone das Repository auf deinen lokalen Rechner.
 Installiere die erforderlichen Abhängigkeiten und Bibliotheken.
 Lade die .ino-Dateien auf die entsprechenden Mikrocontroller hoch.
